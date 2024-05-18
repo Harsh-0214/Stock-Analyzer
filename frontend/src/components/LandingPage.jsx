@@ -5,19 +5,11 @@ import './LandingPage.css';
 const LandingPage = () => {
   const navigate = useNavigate();
 
-  const handleRegisterClick = () => {
-    navigate('/Register');
-  };
-
-  const handleLoginClick = () => {
-    navigate('/Login');
-  };
-
   return (
     <div className="Landing-page">
-      <h1>Welcome</h1>
-      <button className="fade-button" onClick={handleRegisterClick}>Get Started</button>
-      <button className="fade-button" onClick={handleLoginClick}>Login</button>
+      <h1>Stock Analyzer</h1>
+      <div className='button-container'>
+      </div>
     </div>
   );
 };
