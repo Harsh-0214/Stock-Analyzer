@@ -7,7 +7,8 @@ const StockSearch = () => {
   const [symbol, setSymbol] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const navigate = useNavigate();
-  const apiUrl = process.env.REACT_APP_API_URL;
+  const apiUrl = process.env.REACT_APP_API_URL; // Use the environment variable
+  console.log('API URL: ', apiUrl);
 
   const handleInputChange = async (e) => {
     const value = e.target.value;

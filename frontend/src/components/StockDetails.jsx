@@ -7,7 +7,8 @@ import './StockDetails.css';
 const StockDetails = () => {
   const { symbol } = useParams();
   const [stockData, setStockData] = useState(null);
-  const apiUrl = process.env.REACT_APP_API_URL;
+  const apiUrl = process.env.REACT_APP_API_URL; // Use the environment variable
+  console.log('API URL: ', apiUrl);
 
   useEffect(() => {
     const fetchStockData = async () => {
