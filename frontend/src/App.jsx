@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BarChart2, BookOpen, Eye, Activity, TrendingUp, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { BarChart2, BookOpen, Eye, Activity, TrendingUp, CheckCircle, AlertCircle } from 'lucide-react';
 import { AppProvider, useApp } from './context/AppContext';
 import Dashboard from './components/Dashboard/Dashboard';
 import StockDetail from './components/StockDetail/StockDetail';
