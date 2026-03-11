@@ -20,7 +20,10 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    create_tables()
+    try:
+        create_tables()
+    except Exception as e:
+        print(f"Warning: could not initialize database: {e}")
     print("Stock Analyzer API started successfully")
 
 
