@@ -7,11 +7,30 @@ from services.indicators import (
     williams_r, cci, obv, adx, roc, atr,
 )
 
+# Common exchange suffixes to try when a bare symbol returns no data
+_EXCHANGE_SUFFIXES = [".TO", ".L", ".AX", ".HK", ".DE", ".PA", ".T", ".V", ".MI"]
+
+
+def _resolve_symbol(symbol: str) -> tuple[yf.Ticker, str]:
+    """Return (Ticker, resolved_symbol). Tries exchange suffixes if bare symbol has no data."""
+    ticker = yf.Ticker(symbol)
+    hist = ticker.history(period="5d")
+    if not hist.empty:
+        return ticker, symbol
+    # Try common exchange suffixes
+    for suffix in _EXCHANGE_SUFFIXES:
+        candidate = symbol + suffix
+        t = yf.Ticker(candidate)
+        h = t.history(period="5d")
+        if not h.empty:
+            return t, candidate
+    return ticker, symbol  # Return original; caller will handle the empty data
+
 
 def get_stock_info(symbol: str) -> dict:
     """Fetch comprehensive stock information."""
     try:
-        ticker = yf.Ticker(symbol)
+        ticker, symbol = _resolve_symbol(symbol)
         info = ticker.info
 
         hist_1y = ticker.history(period="1y")
@@ -71,7 +90,7 @@ def get_stock_info(symbol: str) -> dict:
 def get_stock_history(symbol: str, period: str = "1y", interval: str = "1d") -> dict:
     """Fetch historical price data with technical indicators."""
     try:
-        ticker = yf.Ticker(symbol)
+        ticker, symbol = _resolve_symbol(symbol)
         hist = ticker.history(period=period, interval=interval)
 
         if hist.empty:
@@ -152,7 +171,7 @@ def get_stock_history(symbol: str, period: str = "1y", interval: str = "1d") -> 
 def get_signal_analysis(symbol: str) -> dict:
     """Generate buy/sell/hold signals based on 13 technical indicators with price targets."""
     try:
-        ticker = yf.Ticker(symbol)
+        ticker, symbol = _resolve_symbol(symbol)
         hist = ticker.history(period="1y")
 
         if hist.empty or len(hist) < 50:
@@ -550,18 +569,22 @@ def get_signal_analysis(symbol: str) -> dict:
 
 
 def search_stocks(query: str) -> list:
-    """Search for stocks by symbol or company name."""
+    """Search for stocks/ETFs by symbol or name across all exchanges."""
     try:
-        ticker = yf.Ticker(query)
-        info = ticker.info
-        if info.get("longName"):
-            return [{
-                "symbol": query.upper(),
-                "name": info.get("longName", query),
-                "exchange": info.get("exchange", ""),
-                "type": info.get("quoteType", "EQUITY"),
-                "sector": info.get("sector", ""),
-            }]
-        return []
+        results = yf.Search(query, max_results=8, news_count=0, lists_count=0, raise_errors=False).quotes
+        out = []
+        for q in results:
+            symbol = q.get("symbol") or q.get("Symbol")
+            name   = q.get("longname") or q.get("shortname") or symbol
+            if not symbol:
+                continue
+            out.append({
+                "symbol":   symbol,
+                "name":     name,
+                "exchange": q.get("exchange", ""),
+                "type":     q.get("quoteType", "EQUITY"),
+                "sector":   q.get("sector", ""),
+            })
+        return out
     except Exception:
         return []
