@@ -81,7 +81,11 @@ export default function TrendingStocks() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-sky-400">{s.symbol}</span>
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-400/10 text-emerald-400 font-semibold">
+                    <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${
+                      s.signal?.includes('BUY')  ? 'bg-emerald-400/10 text-emerald-400' :
+                      s.signal?.includes('SELL') ? 'bg-red-400/10 text-red-400' :
+                                                   'bg-amber-400/10 text-amber-400'
+                    }`}>
                       {s.signal}
                     </span>
                     <RSIBadge rsi={s.rsi} />

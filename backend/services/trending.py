@@ -120,15 +120,13 @@ def get_trending_stocks(limit: int = 20) -> dict:
 
     results.sort(key=lambda x: x["momentum_score"], reverse=True)
 
-    bullish = [r for r in results if r["is_bullish"]]
-
-    top_movers = sorted(bullish, key=lambda x: x["change_1d"], reverse=True)[:10]
-    volume_surges = sorted(bullish, key=lambda x: x["volume_ratio"], reverse=True)[:10]
-    momentum_plays = [r for r in bullish if 50 < r["rsi"] < 65 and r["change_1m"] > 5][:10]
-    oversold_bounce = [r for r in bullish if r["rsi"] < 45][:8]
+    top_movers = sorted(results, key=lambda x: x["change_1d"], reverse=True)[:10]
+    volume_surges = sorted(results, key=lambda x: x["volume_ratio"], reverse=True)[:10]
+    momentum_plays = [r for r in results if 50 < r["rsi"] < 65 and r["change_1m"] > 5][:10]
+    oversold_bounce = [r for r in results if r["rsi"] < 45][:8]
 
     return {
-        "top_momentum": bullish[:limit],
+        "top_momentum": results[:limit],
         "top_movers_today": top_movers,
         "volume_surges": volume_surges,
         "momentum_plays": momentum_plays,
