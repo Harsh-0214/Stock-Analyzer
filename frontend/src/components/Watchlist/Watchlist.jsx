@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, Trash2, Edit3, Eye, Target, DollarSign, StickyNote, RefreshCw } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { watchlistAPI } from '../../services/api';
 import PriceChange from '../common/PriceChange';
 import LoadingSpinner from '../common/LoadingSpinner';
 import StockSearch from '../common/StockSearch';
@@ -80,18 +79,18 @@ function AddStockModal({ onClose }) {
   );
 }
 
-function EditModal({ item, onClose, onSave }) {
+function EditModal({ item, onClose }) {
+  const { updateWatchlistItem } = useApp();
   const [notes, setNotes] = useState(item.notes || '');
   const [buyPrice, setBuyPrice] = useState(item.buy_price || '');
   const [targetPrice, setTargetPrice] = useState(item.target_price || '');
 
   const handleSave = async () => {
-    await watchlistAPI.update(item.symbol, {
+    await updateWatchlistItem(item.symbol, {
       notes,
       buy_price: buyPrice ? parseFloat(buyPrice) : null,
       target_price: targetPrice ? parseFloat(targetPrice) : null,
     });
-    onSave();
     onClose();
   };
 
@@ -279,7 +278,7 @@ export default function Watchlist() {
       )}
 
       {showAdd && <AddStockModal onClose={() => setShowAdd(false)} />}
-      {editItem && <EditModal item={editItem} onClose={() => setEditItem(null)} onSave={loadWatchlist} />}
+      {editItem && <EditModal item={editItem} onClose={() => setEditItem(null)} />}
     </div>
   );
 }
