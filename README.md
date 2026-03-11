@@ -9,7 +9,7 @@ A full-stack stock analyzer with real-time buy/sell signals, Fear & Greed Index,
 - **😱 Fear & Greed Index** — Multi-component sentiment gauge updated in real-time
 - **🚀 Trending Stocks** — Momentum scanner across 80+ stocks with multiple filters
 - **📋 Watchlist** — Track stocks with buy price, target price, P&L tracking, and notes
-- **📊 Interactive Charts** — Candlestick-style charts with overlayable technical indicators
+- **📊 Interactive Charts** — Charts with overlayable technical indicators (SMA, Bollinger Bands, RSI)
 - **📚 Education Center** — 6 comprehensive lessons from basics to advanced options
 
 ## Tech Stack
@@ -18,10 +18,83 @@ A full-stack stock analyzer with real-time buy/sell signals, Fear & Greed Index,
 |-------|-----------|
 | Backend | Python FastAPI + yfinance |
 | Data | Yahoo Finance (free, no API key) |
-| Database | SQLite (via SQLAlchemy) |
+| Database | PostgreSQL via Neon (prod) / SQLite (local dev) |
 | Frontend | React + Tailwind CSS (CDN) |
 | Charts | Recharts |
 | Icons | Lucide React |
+
+---
+
+## Deploying to Vercel (Both Frontend & Backend)
+
+### Overview
+
+You will create **two Vercel projects** from this one repo — one for the backend, one for the frontend. You also need a **free Neon database** (takes 2 minutes).
+
+---
+
+### Step 1 — Get a Free Database (Neon)
+
+The watchlist needs a database that persists. Vercel's filesystem is ephemeral so we use Neon's free PostgreSQL.
+
+1. Go to **[neon.tech](https://neon.tech)** → Sign up (free, no credit card)
+2. Click **"New Project"** → name it `stockiq`
+3. On the dashboard, find **"Connection string"** and copy it — it looks like:
+   ```
+   postgresql://username:password@ep-something.us-east-1.aws.neon.tech/neondb?sslmode=require
+   ```
+4. Save this string — you'll need it in Step 3
+
+---
+
+### Step 2 — Deploy the Backend on Vercel
+
+1. Go to **[vercel.com](https://vercel.com)** → **Add New Project**
+2. Import your GitHub repo: `Harsh-0214/Stock-Analyzer`
+3. On the **Configure Project** screen:
+   - **Root Directory**: `backend`
+   - **Framework Preset**: Other
+   - Leave Build Command and Output Directory blank
+4. Click **Environment Variables** and add:
+
+   | Name | Value |
+   |------|-------|
+   | `DATABASE_URL` | _(paste your Neon connection string from Step 1)_ |
+   | `ALLOWED_ORIGINS` | `https://your-frontend.vercel.app` _(fill in after Step 3)_ |
+
+5. Click **Deploy**
+6. Once deployed, copy the URL (e.g. `https://stock-analyzer-backend.vercel.app`) — you need it in Step 3
+
+---
+
+### Step 3 — Deploy the Frontend on Vercel
+
+1. Go to **[vercel.com](https://vercel.com)** → **Add New Project**
+2. Import the **same GitHub repo**: `Harsh-0214/Stock-Analyzer`
+3. On the **Configure Project** screen:
+   - **Root Directory**: `frontend`
+   - **Framework Preset**: Create React App
+4. Click **Environment Variables** and add:
+
+   | Name | Value |
+   |------|-------|
+   | `REACT_APP_API_URL` | _(paste your backend URL from Step 2)_ |
+
+5. Click **Deploy** — your app is live!
+
+---
+
+### Step 4 — Connect Them (Update CORS)
+
+Go back to your **backend Vercel project** → Settings → Environment Variables → update `ALLOWED_ORIGINS` to your real frontend URL:
+
+```
+https://stock-analyzer-frontend.vercel.app
+```
+
+Then **redeploy the backend** (Vercel dashboard → Deployments → Redeploy).
+
+---
 
 ## Local Development
 
@@ -40,6 +113,8 @@ uvicorn main:app --reload --port 8000
 API runs at `http://localhost:8000`
 Swagger docs at `http://localhost:8000/docs`
 
+No `DATABASE_URL` env var needed locally — it auto-uses SQLite.
+
 ### Frontend Setup
 
 ```bash
@@ -48,49 +123,7 @@ npm install
 npm start
 ```
 
-App runs at `http://localhost:3000` (proxies API calls to backend automatically)
-
----
-
-## Deploying to Vercel
-
-### Step 1: Deploy the Backend
-
-1. Go to [vercel.com](https://vercel.com) and sign in
-2. Click **"Add New Project"**
-3. Import this GitHub repo
-4. Set the **Root Directory** to `backend`
-5. Set the **Build Command** to: `pip install -r requirements.txt`
-6. Set the **Output Directory** to leave blank
-7. Add this **Environment Variable**:
-   ```
-   ALLOWED_ORIGINS = https://your-frontend.vercel.app
-   ```
-8. Deploy — note the URL (e.g. `https://stockiq-backend.vercel.app`)
-
-> **Note**: For the backend on Vercel, you may need to use a Python serverless hosting like Railway or Render instead, as Vercel's Python support has limitations with long-running processes. See the Railway instructions below.
-
-### Step 2: Deploy the Frontend
-
-1. Go to [vercel.com](https://vercel.com), click **"Add New Project"**
-2. Import the same GitHub repo
-3. Set the **Root Directory** to `frontend`
-4. Add this **Environment Variable**:
-   ```
-   REACT_APP_API_URL = https://your-backend-url.vercel.app
-   ```
-5. Click **Deploy** — your frontend is live!
-
----
-
-## Recommended: Backend on Railway (Easier)
-
-1. Go to [railway.app](https://railway.app) and sign in with GitHub
-2. Click **"New Project" → "Deploy from GitHub repo"**
-3. Select this repo, set root directory to `backend`
-4. Add environment variable: `PORT=8000`
-5. Set start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-6. Copy the URL and paste it as `REACT_APP_API_URL` in your Vercel frontend
+App runs at `http://localhost:3000` (proxies API calls to localhost:8000 automatically).
 
 ---
 

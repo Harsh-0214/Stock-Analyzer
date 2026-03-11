@@ -1,13 +1,22 @@
+import os
 from sqlalchemy import create_engine, Column, String, DateTime, Float, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./stock_analyzer.db"
+# Use DATABASE_URL env var for Neon/Postgres in production,
+# fall back to local SQLite for development.
+_raw_url = os.getenv("DATABASE_URL", "sqlite:///./stock_analyzer.db")
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
+# Neon (and some other providers) give a postgres:// URL.
+# SQLAlchemy requires postgresql:// so fix it here.
+if _raw_url.startswith("postgres://"):
+    _raw_url = _raw_url.replace("postgres://", "postgresql://", 1)
+
+IS_SQLITE = _raw_url.startswith("sqlite")
+connect_args = {"check_same_thread": False} if IS_SQLITE else {}
+
+engine = create_engine(_raw_url, connect_args=connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
