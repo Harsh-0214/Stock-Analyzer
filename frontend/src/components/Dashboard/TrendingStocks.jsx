@@ -82,7 +82,7 @@ export default function TrendingStocks() {
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-sky-400">{s.symbol}</span>
                     <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-400/10 text-emerald-400 font-semibold">
-                      BULLISH
+                      {s.signal}
                     </span>
                     <RSIBadge rsi={s.rsi} />
                     {s.volume_ratio > 1.5 && (

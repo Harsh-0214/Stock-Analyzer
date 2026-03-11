@@ -2,6 +2,7 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 from services.indicators import sma, rsi, macd
+from services.stock_service import get_signal_analysis
 import concurrent.futures
 
 MARKET_UNIVERSE = [
@@ -81,14 +82,11 @@ def _analyze_single_stock(symbol: str) -> dict | None:
 
         score = float(np.clip(score, 0, 100))
 
-        # A stock is bullish when price is in an uptrend, MACD confirms
-        # momentum, RSI is not overbought, and the score clears the neutral midpoint
-        is_bullish = (
-            current_price > sma_20_val
-            and macd_val > macd_sig
-            and rsi_val < 75
-            and score >= 60
-        )
+        # Use the same 13-indicator signal analysis as the stock detail page
+        # so the dashboard and detail view are always consistent
+        signal_result = get_signal_analysis(symbol)
+        overall_signal = signal_result.get("overall_signal", "HOLD") if "error" not in signal_result else "HOLD"
+        is_bullish = overall_signal in ("BUY", "STRONG BUY")
 
         return {
             "symbol": symbol,
@@ -104,7 +102,7 @@ def _analyze_single_stock(symbol: str) -> dict | None:
             "momentum_score": round(score, 1),
             "market_cap": info.get("marketCap"),
             "pe_ratio": info.get("trailingPE"),
-            "signal": "BULLISH" if is_bullish else "NEUTRAL",
+            "signal": overall_signal,
             "is_bullish": is_bullish,
         }
     except Exception:
