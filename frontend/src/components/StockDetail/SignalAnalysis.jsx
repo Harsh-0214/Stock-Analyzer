@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, Minus, AlertCircle } from 'lucide-react';
+import { TrendingUp, Minus, AlertCircle } from 'lucide-react';
 import SignalBadge from '../common/SignalBadge';
 
 const strengthIcons = {

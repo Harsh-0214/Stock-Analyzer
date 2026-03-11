@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, Info } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { marketAPI } from '../../services/api';
 import LoadingSpinner from '../common/LoadingSpinner';
 
