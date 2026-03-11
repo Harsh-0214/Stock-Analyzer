@@ -33,4 +33,13 @@ export const educationAPI = {
   getLesson: (id) => api.get(`/api/education/${id}`),
 };
 
+export const cryptoAPI = {
+  getTop: (limit = 20) => api.get(`/api/crypto/top?limit=${limit}`),
+  search: (q) => api.get(`/api/crypto/search?q=${encodeURIComponent(q)}`),
+  getInfo: (symbol) => api.get(`/api/crypto/${symbol}/info`),
+  getHistory: (symbol, period = '1y', interval = '1d') =>
+    api.get(`/api/crypto/${symbol}/history?period=${period}&interval=${interval}`),
+  getSignals: (symbol) => api.get(`/api/crypto/${symbol}/signals`),
+};
+
 export default api;

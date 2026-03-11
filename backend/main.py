@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from models.database import create_tables
-from routers import stocks, watchlist, market, education
+from routers import stocks, watchlist, market, education, crypto
 
 app = FastAPI(
     title="StockIQ API",
@@ -31,6 +31,7 @@ app.include_router(stocks.router)
 app.include_router(watchlist.router)
 app.include_router(market.router)
 app.include_router(education.router)
+app.include_router(crypto.router)
 
 
 @app.get("/api/health")
