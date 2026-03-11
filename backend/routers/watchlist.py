@@ -24,10 +24,10 @@ class WatchlistUpdate(BaseModel):
 @router.get("")
 async def get_watchlist(db: Session = Depends(get_db)):
     """Get all watchlist items with current prices."""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
     items = db.query(WatchlistItem).all()
-    result = []
-    for item in items:
-        stock_data = get_stock_info(item.symbol)
+
+    def fetch_item(item):
         entry = {
             "symbol": item.symbol,
             "company_name": item.company_name,
@@ -36,20 +36,32 @@ async def get_watchlist(db: Session = Depends(get_db)):
             "buy_price": item.buy_price,
             "added_at": item.added_at.isoformat() if item.added_at else None,
         }
-        if "error" not in stock_data:
-            entry.update({
-                "current_price": stock_data.get("current_price"),
-                "price_change": stock_data.get("price_change"),
-                "price_change_pct": stock_data.get("price_change_pct"),
-                "market_cap": stock_data.get("market_cap"),
-                "pe_ratio": stock_data.get("pe_ratio"),
-                "sector": stock_data.get("sector"),
-            })
-            if item.buy_price and stock_data.get("current_price"):
-                entry["pnl_pct"] = round(((stock_data["current_price"] - item.buy_price) / item.buy_price) * 100, 2)
-            if item.target_price and stock_data.get("current_price"):
-                entry["upside_pct"] = round(((item.target_price - stock_data["current_price"]) / stock_data["current_price"]) * 100, 2)
-        result.append(entry)
+        try:
+            stock_data = get_stock_info(item.symbol)
+            if "error" not in stock_data:
+                entry.update({
+                    "current_price": stock_data.get("current_price"),
+                    "price_change": stock_data.get("price_change"),
+                    "price_change_pct": stock_data.get("price_change_pct"),
+                    "market_cap": stock_data.get("market_cap"),
+                    "pe_ratio": stock_data.get("pe_ratio"),
+                    "sector": stock_data.get("sector"),
+                })
+                if item.buy_price and stock_data.get("current_price"):
+                    entry["pnl_pct"] = round(((stock_data["current_price"] - item.buy_price) / item.buy_price) * 100, 2)
+                if item.target_price and stock_data.get("current_price"):
+                    entry["upside_pct"] = round(((item.target_price - stock_data["current_price"]) / stock_data["current_price"]) * 100, 2)
+        except Exception:
+            pass
+        return entry
+
+    if not items:
+        return []
+
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = {executor.submit(fetch_item, item): item.symbol for item in items}
+        result = [f.result() for f in as_completed(futures)]
+
     return result
 
 
