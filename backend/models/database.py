@@ -6,7 +6,7 @@ from datetime import datetime
 
 # Use DATABASE_URL env var for Neon/Postgres in production,
 # fall back to local SQLite for development.
-_raw_url = os.getenv("DATABASE_URL", "sqlite:///./stock_analyzer.db")
+_raw_url = os.getenv("DATABASE_URL", "sqlite:////tmp/stock_analyzer.db")
 
 # Neon (and some other providers) give a postgres:// URL.
 # SQLAlchemy requires postgresql:// so fix it here.
