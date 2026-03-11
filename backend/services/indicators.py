@@ -46,3 +46,61 @@ def stochastic(high: pd.Series, low: pd.Series, close: pd.Series, k_window: int 
     k = 100 * (close - lowest_low) / (highest_high - lowest_low + 1e-10)
     d = k.rolling(window=d_window).mean()
     return k, d
+
+
+def williams_r(high: pd.Series, low: pd.Series, close: pd.Series, window: int = 14) -> pd.Series:
+    highest_high = high.rolling(window=window).max()
+    lowest_low = low.rolling(window=window).min()
+    return -100 * (highest_high - close) / (highest_high - lowest_low + 1e-10)
+
+
+def cci(high: pd.Series, low: pd.Series, close: pd.Series, window: int = 20) -> pd.Series:
+    tp = (high + low + close) / 3
+    tp_sma = tp.rolling(window=window).mean()
+    mean_dev = tp.rolling(window=window).apply(lambda x: np.mean(np.abs(x - x.mean())), raw=True)
+    return (tp - tp_sma) / (0.015 * mean_dev + 1e-10)
+
+
+def obv(close: pd.Series, volume: pd.Series) -> pd.Series:
+    direction = close.diff().apply(lambda x: 1 if x > 0 else (-1 if x < 0 else 0))
+    return (direction * volume).cumsum()
+
+
+def adx(high: pd.Series, low: pd.Series, close: pd.Series, window: int = 14):
+    """Returns (adx, plus_di, minus_di)."""
+    tr1 = high - low
+    tr2 = (high - close.shift(1)).abs()
+    tr3 = (low - close.shift(1)).abs()
+    tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+
+    up_move = high.diff()
+    down_move = -low.diff()
+
+    plus_dm = pd.Series(
+        np.where((up_move > down_move) & (up_move > 0), up_move, 0.0),
+        index=high.index,
+    )
+    minus_dm = pd.Series(
+        np.where((down_move > up_move) & (down_move > 0), down_move, 0.0),
+        index=low.index,
+    )
+
+    atr_val = tr.ewm(span=window, adjust=False).mean()
+    plus_di = 100 * (plus_dm.ewm(span=window, adjust=False).mean() / (atr_val + 1e-10))
+    minus_di = 100 * (minus_dm.ewm(span=window, adjust=False).mean() / (atr_val + 1e-10))
+
+    dx = 100 * (plus_di - minus_di).abs() / (plus_di + minus_di + 1e-10)
+    adx_val = dx.ewm(span=window, adjust=False).mean()
+    return adx_val, plus_di, minus_di
+
+
+def roc(close: pd.Series, window: int = 10) -> pd.Series:
+    return ((close - close.shift(window)) / (close.shift(window) + 1e-10)) * 100
+
+
+def atr(high: pd.Series, low: pd.Series, close: pd.Series, window: int = 14) -> pd.Series:
+    tr1 = high - low
+    tr2 = (high - close.shift(1)).abs()
+    tr3 = (low - close.shift(1)).abs()
+    tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+    return tr.ewm(span=window, adjust=False).mean()
