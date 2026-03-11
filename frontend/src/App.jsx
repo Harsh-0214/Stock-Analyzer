@@ -1,15 +1,17 @@
 import { useEffect } from 'react';
-import { BarChart2, BookOpen, Eye, Activity, TrendingUp, CheckCircle, AlertCircle } from 'lucide-react';
+import { BarChart2, BookOpen, Eye, Activity, TrendingUp, CheckCircle, AlertCircle, Bitcoin } from 'lucide-react';
 import { AppProvider, useApp } from './context/AppContext';
 import Dashboard from './components/Dashboard/Dashboard';
 import StockDetail from './components/StockDetail/StockDetail';
 import Watchlist from './components/Watchlist/Watchlist';
 import Education from './components/Education/Education';
 import FearGreedGauge from './components/FearGreed/FearGreedGauge';
+import CryptoDashboard from './components/Crypto/CryptoDashboard';
 import StockSearch from './components/common/StockSearch';
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart2 },
+  { id: 'crypto',    label: 'Crypto',     icon: Bitcoin },
   { id: 'feargreed', label: 'Fear & Greed', icon: Activity },
   { id: 'watchlist', label: 'Watchlist', icon: Eye },
   { id: 'education', label: 'Education', icon: BookOpen },
@@ -43,6 +45,7 @@ function AppContent() {
     }
     switch (activeTab) {
       case 'dashboard':  return <Dashboard />;
+      case 'crypto':     return <CryptoDashboard />;
       case 'feargreed':  return <FearGreedGauge />;
       case 'watchlist':  return <Watchlist />;
       case 'education':  return <Education />;
