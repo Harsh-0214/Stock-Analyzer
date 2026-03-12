@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query
 from services.stock_service import (
-    get_stock_info, get_stock_history, get_signal_analysis, search_stocks
+    get_stock_info, get_stock_history, get_signal_analysis, search_stocks, get_stock_news
 )
 
 router = APIRouter(prefix="/api/stocks", tags=["stocks"])
@@ -39,6 +39,15 @@ async def stock_history(
 async def stock_signals(symbol: str):
     """Get buy/sell signals and technical analysis."""
     data = get_signal_analysis(symbol.upper())
+    if "error" in data:
+        raise HTTPException(status_code=404, detail=data["error"])
+    return data
+
+
+@router.get("/{symbol}/news")
+async def stock_news(symbol: str, limit: int = Query(8, ge=1, le=20)):
+    """Get recent news for a stock with sentiment and impact analysis."""
+    data = get_stock_news(symbol.upper(), limit)
     if "error" in data:
         raise HTTPException(status_code=404, detail=data["error"])
     return data

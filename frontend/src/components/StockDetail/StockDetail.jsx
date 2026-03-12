@@ -4,6 +4,7 @@ import { stockAPI } from '../../services/api';
 import { useApp } from '../../context/AppContext';
 import StockChart from './StockChart';
 import SignalAnalysis from './SignalAnalysis';
+import StockNews from './StockNews';
 import LoadingSpinner from '../common/LoadingSpinner';
 import PriceChange from '../common/PriceChange';
 
@@ -133,7 +134,7 @@ export default function StockDetail({ symbol }) {
         <div className="lg:col-span-2 space-y-4">
           <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5">
             <div className="flex gap-4 mb-4 border-b border-slate-800">
-              {['chart', 'about'].map(t => (
+              {['chart', 'news', 'about'].map(t => (
                 <button key={t} onClick={() => setActiveTab(t)}
                   className={`pb-2 text-sm font-medium capitalize border-b-2 transition-colors ${
                     activeTab === t ? 'border-sky-500 text-sky-400' : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -143,6 +144,10 @@ export default function StockDetail({ symbol }) {
 
             {activeTab === 'chart' && (
               <StockChart histData={histData} onPeriodChange={handlePeriodChange} currentPeriod={period} />
+            )}
+
+            {activeTab === 'news' && (
+              <StockNews symbol={symbol} />
             )}
 
             {activeTab === 'about' && (

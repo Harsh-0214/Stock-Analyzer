@@ -13,6 +13,7 @@ export const stockAPI = {
   getHistory: (symbol, period = '1y', interval = '1d') =>
     api.get(`/api/stocks/${symbol}/history?period=${period}&interval=${interval}`),
   getSignals: (symbol) => api.get(`/api/stocks/${symbol}/signals`),
+  getNews: (symbol, limit = 8) => api.get(`/api/stocks/${symbol}/news?limit=${limit}`),
 };
 
 export const marketAPI = {

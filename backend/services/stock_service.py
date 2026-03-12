@@ -568,6 +568,178 @@ def get_signal_analysis(symbol: str) -> dict:
         return {"error": str(e)}
 
 
+def _classify_news_impact(title: str, summary: str = "") -> dict:
+    """Classify news sentiment and what it impacts on the stock."""
+    text = (title + " " + summary).lower()
+
+    # Sentiment scoring based on keyword groups
+    bullish_keywords = [
+        "beat", "beats", "record", "record high", "surge", "surges", "soar", "rally",
+        "upgrade", "upgraded", "buy rating", "outperform", "raise", "raised", "boost",
+        "profit", "earnings growth", "revenue growth", "expansion", "partnership",
+        "acquisition", "deal", "contract", "approved", "approval", "launches", "launch",
+        "innovative", "breakthrough", "dividend", "buyback", "share buyback", "strong",
+        "positive", "optimistic", "exceeds", "exceed", "top estimates", "above expectations",
+    ]
+    bearish_keywords = [
+        "miss", "misses", "disappoints", "disappoint", "drop", "drops", "fall", "falls",
+        "decline", "plunge", "plunges", "downgrade", "downgraded", "underperform",
+        "cut", "cuts", "lower", "lowered", "loss", "losses", "lawsuit", "investigation",
+        "probe", "recall", "layoffs", "layoff", "restructuring", "missed", "below",
+        "disappointing", "warning", "negative", "risk", "concern", "uncertainty",
+        "weak", "struggles", "struggle", "deficit", "penalty", "fine", "fraud",
+    ]
+
+    bull_score = sum(1 for kw in bullish_keywords if kw in text)
+    bear_score = sum(1 for kw in bearish_keywords if kw in text)
+
+    if bull_score > bear_score:
+        sentiment = "Bullish"
+        sentiment_color = "green"
+    elif bear_score > bull_score:
+        sentiment = "Bearish"
+        sentiment_color = "red"
+    else:
+        sentiment = "Neutral"
+        sentiment_color = "gray"
+
+    # Determine impact area
+    impact_area = "General"
+    if any(kw in text for kw in ["earnings", "profit", "revenue", "eps", "quarter", "annual", "guidance"]):
+        impact_area = "Earnings & Revenue"
+    elif any(kw in text for kw in ["fda", "approval", "approved", "drug", "trial", "clinical", "therapy"]):
+        impact_area = "Regulatory & Product"
+    elif any(kw in text for kw in ["ceo", "cfo", "executive", "management", "board", "director", "appoint"]):
+        impact_area = "Leadership"
+    elif any(kw in text for kw in ["merger", "acquisition", "buyout", "takeover", "deal", "partnership"]):
+        impact_area = "M&A / Deals"
+    elif any(kw in text for kw in ["lawsuit", "settlement", "investigation", "probe", "fine", "penalty", "fraud"]):
+        impact_area = "Legal & Regulatory"
+    elif any(kw in text for kw in ["dividend", "buyback", "split", "share repurchase"]):
+        impact_area = "Shareholder Returns"
+    elif any(kw in text for kw in ["upgrade", "downgrade", "price target", "analyst", "rating", "outperform"]):
+        impact_area = "Analyst Opinion"
+    elif any(kw in text for kw in ["product", "launch", "release", "innovation", "technology"]):
+        impact_area = "Product & Innovation"
+    elif any(kw in text for kw in ["economy", "inflation", "fed", "interest rate", "market", "sector", "industry"]):
+        impact_area = "Macro / Market"
+
+    # Build an impact explanation
+    impact_map = {
+        "Earnings & Revenue": {
+            "Bullish": "May drive price higher — strong earnings signal improved profitability.",
+            "Bearish": "May pressure price — weak earnings raise doubts about future growth.",
+            "Neutral": "Earnings-related; watch for guidance updates.",
+        },
+        "Regulatory & Product": {
+            "Bullish": "Positive regulatory or product news can unlock new revenue streams.",
+            "Bearish": "Regulatory setbacks can delay revenue and increase costs.",
+            "Neutral": "Regulatory development; outcome uncertain for stock price.",
+        },
+        "Leadership": {
+            "Bullish": "Strong leadership changes can boost investor confidence.",
+            "Bearish": "Management uncertainty may increase volatility short-term.",
+            "Neutral": "Leadership change; market awaits strategic direction.",
+        },
+        "M&A / Deals": {
+            "Bullish": "Deal activity often signals growth ambitions and can boost valuation.",
+            "Bearish": "M&A concerns can weigh on shares if integration risks are high.",
+            "Neutral": "Deal in progress; final terms will determine impact.",
+        },
+        "Legal & Regulatory": {
+            "Bullish": "Favorable resolution removes overhang and reduces risk premium.",
+            "Bearish": "Legal exposure adds uncertainty and potential financial liability.",
+            "Neutral": "Legal proceedings ongoing; outcome remains to be seen.",
+        },
+        "Shareholder Returns": {
+            "Bullish": "Dividends or buybacks signal financial confidence and reward investors.",
+            "Bearish": "Cuts to shareholder returns may signal cash flow pressure.",
+            "Neutral": "Capital allocation update; details matter for valuation.",
+        },
+        "Analyst Opinion": {
+            "Bullish": "Upgrades or higher price targets can attract institutional interest.",
+            "Bearish": "Downgrades or cuts to targets may trigger institutional selling.",
+            "Neutral": "Analyst view updated; overall consensus matters more than one opinion.",
+        },
+        "Product & Innovation": {
+            "Bullish": "New products can expand addressable market and boost future revenue.",
+            "Bearish": "Product issues or delays can dent growth expectations.",
+            "Neutral": "Product news; commercial success will determine price impact.",
+        },
+        "Macro / Market": {
+            "Bullish": "Favorable macro tailwinds can lift the broader sector and this stock.",
+            "Bearish": "Macro headwinds may compress valuations across the sector.",
+            "Neutral": "Macro factor; impact depends on company's sensitivity to the trend.",
+        },
+        "General": {
+            "Bullish": "Positive news may increase buying interest in the near term.",
+            "Bearish": "Negative news may trigger selling pressure short-term.",
+            "Neutral": "Mixed signals; monitor for follow-through in price action.",
+        },
+    }
+
+    impact_explanation = impact_map.get(impact_area, impact_map["General"]).get(sentiment, "")
+
+    return {
+        "sentiment": sentiment,
+        "sentiment_color": sentiment_color,
+        "impact_area": impact_area,
+        "impact_explanation": impact_explanation,
+    }
+
+
+def get_stock_news(symbol: str, limit: int = 8) -> dict:
+    """Fetch recent news for a stock with sentiment and impact analysis."""
+    try:
+        ticker, symbol = _resolve_symbol(symbol)
+        raw_news = ticker.news or []
+
+        articles = []
+        for item in raw_news[:limit]:
+            content = item.get("content", {})
+            title = content.get("title") or item.get("title", "")
+            summary = content.get("summary") or item.get("summary", "")
+            provider = (
+                content.get("provider", {}).get("displayName")
+                or item.get("publisher", "")
+            )
+            pub_date = content.get("pubDate") or item.get("providerPublishTime")
+
+            # Build canonical URL
+            canonical = content.get("canonicalUrl", {})
+            if isinstance(canonical, dict):
+                url = canonical.get("url", "")
+            else:
+                url = item.get("link", "")
+
+            if not title:
+                continue
+
+            # Format timestamp
+            if isinstance(pub_date, (int, float)):
+                from datetime import timezone
+                pub_str = datetime.fromtimestamp(pub_date, tz=timezone.utc).strftime("%b %d, %Y")
+            elif isinstance(pub_date, str):
+                pub_str = pub_date[:10]
+            else:
+                pub_str = ""
+
+            impact = _classify_news_impact(title, summary)
+
+            articles.append({
+                "title": title,
+                "summary": summary[:300] if summary else "",
+                "publisher": provider,
+                "published_at": pub_str,
+                "url": url,
+                **impact,
+            })
+
+        return {"symbol": symbol.upper(), "news": articles}
+    except Exception as e:
+        return {"error": str(e)}
+
+
 def search_stocks(query: str) -> list:
     """Search for stocks/ETFs by symbol or name across all exchanges."""
     try:
