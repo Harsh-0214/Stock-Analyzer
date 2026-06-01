@@ -159,6 +159,46 @@ App runs at `http://localhost:3000` (proxies API calls to localhost:8000 automat
 
 ---
 
+## Discord Bot
+
+`stockiq_bot.py` brings StockIQ commands directly into any Discord server.
+
+### Commands
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `!analyze <SYMBOL>` | Full analysis — signals, key levels, price targets, all indicators | `!analyze NFLX` |
+| `!price <SYMBOL>` | Quick price snapshot — current price, change, volume, market cap | `!price AAPL` |
+| `!signals <SYMBOL>` | All 11 technical indicator signals in one embed | `!signals TSLA` |
+| `!help` | Show available commands | `!help` |
+
+### Setup
+
+1. **Install dependencies**
+   ```bash
+   pip install discord.py aiohttp
+   ```
+
+2. **Create a Discord bot** at [discord.com/developers/applications](https://discord.com/developers/applications)
+   - New Application → Bot → Reset Token → copy token
+   - Enable **Message Content Intent** under Bot → Privileged Gateway Intents
+   - Invite the bot to your server using OAuth2 → URL Generator (scopes: `bot`, permissions: `Send Messages`, `Embed Links`)
+
+3. **Run the bot**
+   ```bash
+   export DISCORD_BOT_TOKEN="your_token_here"
+   python stockiq_bot.py
+   ```
+
+   You should see:
+   ```
+   ✅ StockIQ Bot logged in as StockIQ#1234 (ID: ...)
+   ```
+
+The bot connects to `https://stock-analyzer-teal.vercel.app/api` — no extra setup needed.
+
+---
+
 ## Disclaimer
 
 This tool is for **educational purposes only**. Nothing here constitutes financial advice. Always do your own research and consult a financial advisor before making investment decisions.
